@@ -5,7 +5,7 @@ import sys
 pygame.init()
 
 # Configurações da janela
-largura, altura = 685, 400
+largura, altura = 650, 400
 tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption("Calculadora de Número Primo")
 
@@ -82,6 +82,9 @@ class TelaCalculadora:
             else:
                 self.cor_caixa = self.cor_inativo
         elif evento.type == pygame.KEYDOWN:
+            # Verifica se a tecla "Esc" foi pressionada para retornar ao menu
+            if evento.key == pygame.K_ESCAPE:
+                return "menu"
             if self.cor_caixa == self.cor_ativo:
                 if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                     # Verifica se o número é primo quando o usuário pressiona Enter
