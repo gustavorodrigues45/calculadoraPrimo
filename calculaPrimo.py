@@ -5,7 +5,7 @@ import sys
 pygame.init()
 
 # Configurações da janela
-largura, altura = 650, 400
+largura, altura = 800, 400
 tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption("Calculadora de Número Primo")
 
@@ -13,6 +13,7 @@ pygame.display.set_caption("Calculadora de Número Primo")
 BRANCO = (255, 255, 255)
 PRETO = (0, 0, 0)
 VERMELHO = (255, 0, 0)
+AZUL = (0, 0, 255)
 fonte = pygame.font.Font(None, 32)
 
 # Função para verificar se um número é primo
@@ -26,23 +27,31 @@ def eh_primo(numero):
 
 class TelaMenu:
     def __init__(self):
-        self.iniciar_botao = pygame.Rect(250, 200, 100, 50)
+        self.iniciar_botao = pygame.Rect(250, 150, 100, 50)
+        self.oque_sao_primos_botao = pygame.Rect(200, 250, 295, 50)
     
     def desenhar(self):
         tela.fill(BRANCO)
         titulo = fonte.render("Bem-vindo à Calculadora de Números Primos", True, PRETO)
-        tela.blit(titulo, (100, 100))
+        tela.blit(titulo, (100, 50))
         
         # Desenha o botão "Iniciar"
         pygame.draw.rect(tela, VERMELHO, self.iniciar_botao)
         iniciar_texto = fonte.render("Iniciar", True, BRANCO)
         tela.blit(iniciar_texto, (self.iniciar_botao.x + 15, self.iniciar_botao.y + 10))
+        
+        # Desenha o botão "O que são números primos?"
+        pygame.draw.rect(tela, AZUL, self.oque_sao_primos_botao)
+        oque_sao_texto = fonte.render("O que são números primos?", True, BRANCO)
+        tela.blit(oque_sao_texto, (self.oque_sao_primos_botao.x + 10, self.oque_sao_primos_botao.y + 10))
     
     def lidar_eventos(self, evento):
         if evento.type == pygame.MOUSEBUTTONDOWN:
-            # Verifica se o usuário clicou no botão "Iniciar"
+            # Verifica se o usuário clicou nos botões
             if self.iniciar_botao.collidepoint(evento.pos):
                 return "calculadora"  # Muda para a tela da calculadora
+            elif self.oque_sao_primos_botao.collidepoint(evento.pos):
+                return "explicacao"  # Muda para a tela de explicação
         return "menu"
 
 class TelaCalculadora:
@@ -76,18 +85,15 @@ class TelaCalculadora:
 
     def lidar_eventos(self, evento):
         if evento.type == pygame.MOUSEBUTTONDOWN:
-            # Checa se o usuário clicou dentro da caixa de input
             if self.input_box.collidepoint(evento.pos):
                 self.cor_caixa = self.cor_ativo
             else:
                 self.cor_caixa = self.cor_inativo
         elif evento.type == pygame.KEYDOWN:
-            # Verifica se a tecla "Esc" foi pressionada para retornar ao menu
             if evento.key == pygame.K_ESCAPE:
                 return "menu"
             if self.cor_caixa == self.cor_ativo:
                 if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
-                    # Verifica se o número é primo quando o usuário pressiona Enter
                     try:
                         numero = int(self.texto_input)
                         if eh_primo(numero):
@@ -104,11 +110,28 @@ class TelaCalculadora:
                     self.texto_input += evento.unicode
         return "calculadora"
 
+class TelaExplicacao:
+    def desenhar(self):
+        tela.fill(BRANCO)
+        titulo = fonte.render("O que são números primos?", True, PRETO)
+        tela.blit(titulo, (150, 50))
+        explicacao = fonte.render("São números naturais > 1, divisíveis apenas por 1 e por si mesmos.", True, PRETO)
+        tela.blit(explicacao, (50, 150))
+        voltar_texto = fonte.render("Pressione ESC para voltar ao menu.", True, PRETO)
+        tela.blit(voltar_texto, (150, 300))
+    
+    def lidar_eventos(self, evento):
+        if evento.type == pygame.KEYDOWN:
+            if evento.key == pygame.K_ESCAPE:
+                return "menu"
+        return "explicacao"
+
 class Aplicacao:
     def __init__(self):
         self.tela_atual = "menu"
         self.menu = TelaMenu()
         self.calculadora = TelaCalculadora()
+        self.explicacao = TelaExplicacao()
     
     def executar(self):
         executando = True
@@ -122,12 +145,16 @@ class Aplicacao:
                     self.tela_atual = self.menu.lidar_eventos(evento)
                 elif self.tela_atual == "calculadora":
                     self.tela_atual = self.calculadora.lidar_eventos(evento)
+                elif self.tela_atual == "explicacao":
+                    self.tela_atual = self.explicacao.lidar_eventos(evento)
 
             # Desenhar a tela atual
             if self.tela_atual == "menu":
                 self.menu.desenhar()
             elif self.tela_atual == "calculadora":
                 self.calculadora.desenhar()
+            elif self.tela_atual == "explicacao":
+                self.explicacao.desenhar()
 
             # Atualiza a tela
             pygame.display.flip()
