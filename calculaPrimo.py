@@ -31,7 +31,6 @@ def eh_primo(numero):
 
 # Função para desenhar botões com gradiente e bordas arredondadas
 def desenhar_botao_gradiente(superficie, ret, cor1, cor2, texto, fonte, cor_texto):
-    # Desenha o gradiente
     for i in range(ret.height):
         cor_intermediaria = (
             cor1[0] + (cor2[0] - cor1[0]) * i // ret.height,
@@ -40,47 +39,51 @@ def desenhar_botao_gradiente(superficie, ret, cor1, cor2, texto, fonte, cor_text
         )
         pygame.draw.rect(superficie, cor_intermediaria, (ret.x, ret.y + i, ret.width, 1))
     
-    # Desenha o botão com bordas arredondadas
     pygame.draw.rect(superficie, cor1, ret, border_radius=10)
     pygame.draw.rect(superficie, cor2, ret.inflate(-6, -6), border_radius=8)
     
-    # Desenha o texto centralizado no botão
     texto_surface = fonte.render(texto, True, cor_texto)
     texto_rect = texto_surface.get_rect(center=ret.center)
     superficie.blit(texto_surface, texto_rect)
 
 class TelaMenu:
     def __init__(self):
-        self.iniciar_botao = pygame.Rect((largura - 150) // 2, 150, 150, 50)
-        self.oque_sao_primos_botao = pygame.Rect((largura - 295) // 2, 250, 295, 50)
+        self.iniciar_botao = pygame.Rect((largura - 150) // 2, 100, 150, 50)
+        self.oque_sao_primos_botao = pygame.Rect((largura - 295) // 2, 180, 295, 50)
+        self.tabela_primos_botao = pygame.Rect((largura - 295) // 2, 260, 295, 50)
     
     def desenhar(self):
         tela.fill(BRANCO)
         titulo = fonte.render("Bem-vindo à Calculadora de Números Primos", True, PRETO)
-        titulo_rect = titulo.get_rect(center=(largura // 2, 70))
+        titulo_rect = titulo.get_rect(center=(largura // 2, 50))
         tela.blit(titulo, titulo_rect)
         
-        # Botão "Iniciar"
         desenhar_botao_gradiente(
             tela, self.iniciar_botao, 
             (255, 100, 100), (200, 0, 0), 
             "Iniciar", fonte, BRANCO
         )
         
-        # Botão "O que são números primos?"
         desenhar_botao_gradiente(
             tela, self.oque_sao_primos_botao, 
             (100, 100, 255), (0, 0, 200), 
             "O que são números primos?", fonte, BRANCO
         )
+        
+        desenhar_botao_gradiente(
+            tela, self.tabela_primos_botao, 
+            (100, 255, 100), (0, 200, 0), 
+            "Tabela de Primos", fonte, BRANCO
+        )
     
     def lidar_eventos(self, evento):
         if evento.type == pygame.MOUSEBUTTONDOWN:
-            # Verifica se o usuário clicou nos botões
             if self.iniciar_botao.collidepoint(evento.pos):
-                return "calculadora"  # Muda para a tela da calculadora
+                return "calculadora"
             elif self.oque_sao_primos_botao.collidepoint(evento.pos):
-                return "explicacao"  # Muda para a tela de explicação
+                return "explicacao"
+            elif self.tabela_primos_botao.collidepoint(evento.pos):
+                return "tabela_primos"
         return "menu"
 
 class TelaCalculadora:
@@ -95,20 +98,16 @@ class TelaCalculadora:
 
     def desenhar(self):
         tela.fill(BRANCO)
-        
-        # Exibe a instrução para o usuário
-        instrucao = fonte.render("Insira algum número para verificar se são primos", True, PRETO)
+        instrucao = fonte.render("Insira um número para verificar se é primo", True, PRETO)
         instrucao_rect = instrucao.get_rect(center=(largura // 2, 50))
         tela.blit(instrucao, instrucao_rect)
         
-        # Renderiza o texto da caixa de input
         txt_surface = fonte.render(self.texto_input, True, PRETO)
         largura_txt = max(200, txt_surface.get_width() + 10)
         self.input_box.w = largura_txt
         tela.blit(txt_surface, (self.input_box.x + 5, self.input_box.y + 5))
         pygame.draw.rect(tela, self.cor_caixa, self.input_box, 2)
         
-        # Renderiza o resultado, se necessário
         if self.mostrar_resultado:
             resultado_surface = fonte.render(self.resultado, True, PRETO)
             resultado_rect = resultado_surface.get_rect(center=(largura // 2, 250))
@@ -124,7 +123,7 @@ class TelaCalculadora:
             if evento.key == pygame.K_ESCAPE:
                 return "menu"
             if self.cor_caixa == self.cor_ativo:
-                if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
+                if evento.key == pygame.K_RETURN:
                     try:
                         numero = int(self.texto_input)
                         if eh_primo(numero):
@@ -147,7 +146,9 @@ class TelaExplicacao:
         titulo = fonte.render("O que são números primos?", True, PRETO)
         titulo_rect = titulo.get_rect(center=(largura // 2, 50))
         tela.blit(titulo, titulo_rect)
-        explicacao = fonte.render("São números naturais > 1, divisíveis apenas por 1 e por si mesmos.", True, PRETO)
+        explicacao = fonte.render(
+            "São números naturais > 1 divisíveis apenas por 1 e por si mesmos.", True, PRETO
+        )
         explicacao_rect = explicacao.get_rect(center=(largura // 2, 150))
         tela.blit(explicacao, explicacao_rect)
         voltar_texto = fonte.render("Pressione ESC para voltar ao menu.", True, PRETO)
@@ -160,12 +161,32 @@ class TelaExplicacao:
                 return "menu"
         return "explicacao"
 
+class TelaTabelaPrimos:
+    def __init__(self):
+        self.imagem = pygame.image.load("tabela_primos.png")
+        self.imagem = pygame.transform.scale(self.imagem, (600, 300))
+    
+    def desenhar(self):
+        tela.fill(BRANCO)
+        imagem_rect = self.imagem.get_rect(center=(largura // 2, altura // 2))
+        tela.blit(self.imagem, imagem_rect)
+        voltar_texto = fonte.render("Pressione ESC para voltar ao menu.", True, PRETO)
+        voltar_rect = voltar_texto.get_rect(center=(largura // 2, altura - 30))
+        tela.blit(voltar_texto, voltar_rect)
+    
+    def lidar_eventos(self, evento):
+        if evento.type == pygame.KEYDOWN:
+            if evento.key == pygame.K_ESCAPE:
+                return "menu"
+        return "tabela_primos"
+
 class Aplicacao:
     def __init__(self):
         self.tela_atual = "menu"
         self.menu = TelaMenu()
         self.calculadora = TelaCalculadora()
         self.explicacao = TelaExplicacao()
+        self.tabela_primos = TelaTabelaPrimos()
     
     def executar(self):
         executando = True
@@ -174,28 +195,28 @@ class Aplicacao:
                 if evento.type == pygame.QUIT:
                     executando = False
                 
-                # Lidar com eventos dependendo da tela atual
                 if self.tela_atual == "menu":
                     self.tela_atual = self.menu.lidar_eventos(evento)
                 elif self.tela_atual == "calculadora":
                     self.tela_atual = self.calculadora.lidar_eventos(evento)
                 elif self.tela_atual == "explicacao":
                     self.tela_atual = self.explicacao.lidar_eventos(evento)
+                elif self.tela_atual == "tabela_primos":
+                    self.tela_atual = self.tabela_primos.lidar_eventos(evento)
 
-            # Desenhar a tela atual
             if self.tela_atual == "menu":
                 self.menu.desenhar()
             elif self.tela_atual == "calculadora":
                 self.calculadora.desenhar()
             elif self.tela_atual == "explicacao":
                 self.explicacao.desenhar()
+            elif self.tela_atual == "tabela_primos":
+                self.tabela_primos.desenhar()
 
-            # Atualiza a tela
             pygame.display.flip()
         
         pygame.quit()
         sys.exit()
 
-# Inicializa e executa a aplicação
 app = Aplicacao()
 app.executar()
