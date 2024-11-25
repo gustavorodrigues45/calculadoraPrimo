@@ -1,8 +1,9 @@
 import pygame
+import pygame.freetype
 import sys
 import os
 
-# Inicializando o Pygame
+# Inicializando o Pygame e o módulo freetype
 pygame.init()
 
 # Configurações da janela
@@ -13,21 +14,30 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption("Calculadora de Número Primo")
 
-# Cores e fontes
+# Cores
 BRANCO = (255, 255, 255)
 PRETO = (0, 0, 0)
 VERMELHO = (255, 0, 0)
 AZUL = (0, 0, 255)
-fonte = pygame.font.Font(None, 32)
 
-# Função para verificar se um número é primo
-def eh_primo(numero):
-    if numero <= 1:
-        return False
-    for i in range(2, int(numero**0.5) + 1):
+# Carregar a fonte personalizada
+POKEFONT = pygame.freetype.Font("PokemonGb-RA.ttf", 11)
+
+# Função para verificar os divisores de um número
+def verificar_divisores(numero):
+    divisores = []
+    for i in range(1, numero + 1):
         if numero % i == 0:
-            return False
-    return True
+            divisores.append(i)
+    return divisores
+
+# Função para verificar se o número é primo e gerar a explicação
+def verificar_primo_com_explicacao(numero):
+    divisores = verificar_divisores(numero)
+    if len(divisores) == 2:
+        return True, f"O número {numero} é primo porque é divisível apenas por {divisores[0]} e {divisores[1]}."
+    else:
+        return False, f"O número {numero} nao é primo porque é divisível por {', '.join(map(str, divisores))}."
 
 # Função para desenhar botões com gradiente e bordas arredondadas
 def desenhar_botao_gradiente(superficie, ret, cor1, cor2, texto, fonte, cor_texto):
@@ -42,7 +52,7 @@ def desenhar_botao_gradiente(superficie, ret, cor1, cor2, texto, fonte, cor_text
     pygame.draw.rect(superficie, cor1, ret, border_radius=10)
     pygame.draw.rect(superficie, cor2, ret.inflate(-6, -6), border_radius=8)
     
-    texto_surface = fonte.render(texto, True, cor_texto)
+    texto_surface, _ = fonte.render(texto, (0, 0, 0))
     texto_rect = texto_surface.get_rect(center=ret.center)
     superficie.blit(texto_surface, texto_rect)
 
@@ -54,26 +64,26 @@ class TelaMenu:
     
     def desenhar(self):
         tela.fill(BRANCO)
-        titulo = fonte.render("Bem-vindo à Calculadora de Números Primos", True, PRETO)
+        titulo, _ = POKEFONT.render("Bem-vindo à Calculadora de Números Primos", (0, 0, 0))
         titulo_rect = titulo.get_rect(center=(largura // 2, 50))
         tela.blit(titulo, titulo_rect)
         
         desenhar_botao_gradiente(
             tela, self.iniciar_botao, 
             (255, 100, 100), (200, 0, 0), 
-            "Iniciar", fonte, BRANCO
+            "Iniciar", POKEFONT, BRANCO
         )
         
         desenhar_botao_gradiente(
             tela, self.oque_sao_primos_botao, 
             (100, 100, 255), (0, 0, 200), 
-            "O que são números primos?", fonte, BRANCO
+            "O que sao números primos?", POKEFONT, BRANCO
         )
         
         desenhar_botao_gradiente(
             tela, self.tabela_primos_botao, 
             (100, 255, 100), (0, 200, 0), 
-            "Tabela de Primos", fonte, BRANCO
+            "Tabela de Primos", POKEFONT, BRANCO
         )
     
     def lidar_eventos(self, evento):
@@ -98,18 +108,18 @@ class TelaCalculadora:
 
     def desenhar(self):
         tela.fill(BRANCO)
-        instrucao = fonte.render("Insira um número para verificar se é primo", True, PRETO)
+        instrucao, _ = POKEFONT.render("Insira um número para verificar se é primo", (0, 0, 0))
         instrucao_rect = instrucao.get_rect(center=(largura // 2, 50))
         tela.blit(instrucao, instrucao_rect)
         
-        txt_surface = fonte.render(self.texto_input, True, PRETO)
+        txt_surface, _ = POKEFONT.render(self.texto_input, (0, 0, 0))
         largura_txt = max(200, txt_surface.get_width() + 10)
         self.input_box.w = largura_txt
         tela.blit(txt_surface, (self.input_box.x + 5, self.input_box.y + 5))
         pygame.draw.rect(tela, self.cor_caixa, self.input_box, 2)
         
         if self.mostrar_resultado:
-            resultado_surface = fonte.render(self.resultado, True, PRETO)
+            resultado_surface, _ = POKEFONT.render(self.resultado, (0, 0, 0))
             resultado_rect = resultado_surface.get_rect(center=(largura // 2, 250))
             tela.blit(resultado_surface, resultado_rect)
 
@@ -123,13 +133,11 @@ class TelaCalculadora:
             if evento.key == pygame.K_ESCAPE:
                 return "menu"
             if self.cor_caixa == self.cor_ativo:
-                if evento.key == pygame.K_RETURN:
+                if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                     try:
                         numero = int(self.texto_input)
-                        if eh_primo(numero):
-                            self.resultado = f"O número {numero} é primo."
-                        else:
-                            self.resultado = f"O número {numero} não é primo."
+                        primo, explicacao = verificar_primo_com_explicacao(numero)
+                        self.resultado = explicacao
                     except ValueError:
                         self.resultado = "Digite um número válido."
                     self.mostrar_resultado = True
@@ -143,15 +151,15 @@ class TelaCalculadora:
 class TelaExplicacao:
     def desenhar(self):
         tela.fill(BRANCO)
-        titulo = fonte.render("O que são números primos?", True, PRETO)
+        titulo, _ = POKEFONT.render("O que sao números primos?", (0, 0, 0))
         titulo_rect = titulo.get_rect(center=(largura // 2, 50))
         tela.blit(titulo, titulo_rect)
-        explicacao = fonte.render(
-            "São números naturais > 1 divisíveis apenas por 1 e por si mesmos.", True, PRETO
+        explicacao, _ = POKEFONT.render(
+            "Sao números naturais maiores que 1, divisíveis apenas por 1 e por si mesmos.", (0, 0, 0)
         )
         explicacao_rect = explicacao.get_rect(center=(largura // 2, 150))
         tela.blit(explicacao, explicacao_rect)
-        voltar_texto = fonte.render("Pressione ESC para voltar ao menu.", True, PRETO)
+        voltar_texto, _ = POKEFONT.render("Pressione ESC para voltar ao menu.", (0, 0, 0))
         voltar_rect = voltar_texto.get_rect(center=(largura // 2, 300))
         tela.blit(voltar_texto, voltar_rect)
     
@@ -170,7 +178,7 @@ class TelaTabelaPrimos:
         tela.fill(BRANCO)
         imagem_rect = self.imagem.get_rect(center=(largura // 2, altura // 2))
         tela.blit(self.imagem, imagem_rect)
-        voltar_texto = fonte.render("Pressione ESC para voltar ao menu.", True, PRETO)
+        voltar_texto, _ = POKEFONT.render("Pressione ESC para voltar ao menu.", (0, 0, 0))
         voltar_rect = voltar_texto.get_rect(center=(largura // 2, altura - 30))
         tela.blit(voltar_texto, voltar_rect)
     
@@ -187,7 +195,7 @@ class Aplicacao:
         self.calculadora = TelaCalculadora()
         self.explicacao = TelaExplicacao()
         self.tabela_primos = TelaTabelaPrimos()
-    
+
     def executar(self):
         executando = True
         while executando:
